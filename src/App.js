@@ -619,9 +619,10 @@ function App() {
       printWindow.document.write(`
         @media print {
           body {
-            -webkit-print-color-adjust: exact;
+            -webkit-print-color-adjust: exact; /* For WebKit browsers to print background colors/images */
             margin: 0;
             padding: 0;
+            font-family: 'Inter', sans-serif; /* Ensure font consistency */
             display: flex;
             justify-content: center;
             align-items: flex-start; /* Align to top */
@@ -629,23 +630,45 @@ function App() {
           }
           .bill-container {
             width: 100%;
-            max-width: 80mm; /* Standard receipt paper width, adjust if needed */
+            max-width: 80mm; /* Standard receipt paper width */
             box-shadow: none;
             border: none;
             padding: 10mm; /* Add some padding for print margins */
             box-sizing: border-box;
           }
+          /* Table styling for print */
           table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed; /* Ensures columns are fixed width */
           }
           th, td {
             padding: 4px 2px; /* Reduce padding for print */
             font-size: 0.75rem; /* Smaller font size for print */
+            word-wrap: break-word; /* Prevents long words from overflowing */
           }
+          th:nth-child(1), td:nth-child(1) { width: 50%; text-align: left; } /* Product Name */
+          th:nth-child(2), td:nth-child(2) { width: 15%; text-align: center; } /* Qty */
+          th:nth-child(3), td:nth-child(3) { width: 20%; text-align: right; } /* Price */
+          th:nth-child(4), td:nth-child(4) { width: 15%; text-align: right; } /* Total */
+
           .logo-img-print {
             max-width: 80px; /* Adjust logo size for print */
             height: auto;
+            margin-bottom: 10px; /* Spacing below logo */
+          }
+          .text-2xl { font-size: 1.25rem; } /* Adjust heading sizes for print */
+          .text-sm { font-size: 0.7rem; }
+          .text-md { font-size: 0.8rem; }
+          .text-lg { font-size: 0.9rem; }
+          .text-xl { font-size: 1rem; }
+          .font-bold { font-weight: 700; }
+          .font-semibold { font-weight: 600; }
+          .font-medium { font-weight: 500; }
+
+          /* Ensure no page breaks inside critical elements */
+          .bill-container, .border-t, .border-b, table, tbody, tr {
+            page-break-inside: avoid;
           }
         }
       `);
@@ -728,19 +751,49 @@ function App() {
   const handleExportPdf = async () => {
     if (!pdfLibsLoaded) {
       console.error("PDF libraries are not yet loaded. Please wait a moment and try again.");
-      // Optionally, show a user-friendly message in the UI
       return;
     }
     if (billRef.current && window.html2canvas && window.jspdf) {
       const input = billRef.current;
-      const canvas = await window.html2canvas(input, { scale: 2 });
+      // Capture the full scrollable height and width of the content
+      const canvas = await window.html2canvas(input, {
+        scale: 2, // Keep scale for better quality
+        useCORS: true, // Important for images loaded from different origins (like the logo)
+        windowWidth: input.scrollWidth, // Capture full scrollable width
+        windowHeight: input.scrollHeight // Capture full scrollable height
+      });
+
       const imgData = canvas.toDataURL('image/png');
+
+      // Define standard A4 dimensions in pixels (approx. 96 DPI)
+      const a4WidthPx = 794; // A4 width at 96 DPI
+      const a4HeightPx = 1123; // A4 height at 96 DPI
+
       const pdf = new window.jspdf.jsPDF({
         orientation: 'portrait',
         unit: 'px',
-        format: [canvas.width, canvas.height]
+        format: [a4WidthPx, a4HeightPx] // Set PDF format to A4 dimensions
       });
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+
+      // Calculate the dimensions to fit the image on the A4 page while maintaining aspect ratio
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const aspectRatio = imgWidth / imgHeight;
+
+      let finalImgWidth = a4WidthPx;
+      let finalImgHeight = a4WidthPx / aspectRatio;
+
+      // If the scaled height is greater than A4 height, scale down by height
+      if (finalImgHeight > a4HeightPx) {
+        finalImgHeight = a4HeightPx;
+        finalImgWidth = a4HeightPx * aspectRatio;
+      }
+
+      // Add image to PDF, centered on the page
+      const xOffset = (a4WidthPx - finalImgWidth) / 2;
+      const yOffset = (a4HeightPx - finalImgHeight) / 2; // Center vertically as well
+
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, finalImgWidth, finalImgHeight);
       pdf.save(`Mother_Dairy_Bill_${customerName || 'Customer'}_${billDate}.pdf`);
     } else {
       console.error("html2canvas or jspdf not available. Check if scripts loaded correctly.");
@@ -1162,7 +1215,7 @@ function App() {
                         <td className="py-2 px-4 text-right text-gray-800">{item.price.toFixed(2)}</td>
                         <td className="py-2 px-4 text-right text-gray-800">{item.total.toFixed(2)}</td>
                       </tr>
-                    )) 
+                    ))
                   ) : (
                     <tr>
                       <td colSpan="4" className="py-4 text-center text-gray-500">No items selected.</td>
