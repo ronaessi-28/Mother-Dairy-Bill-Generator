@@ -1162,7 +1162,7 @@ function App() {
                         <td className="py-2 px-4 text-right text-gray-800">{item.price.toFixed(2)}</td>
                         <td className="py-2 px-4 text-right text-gray-800">{item.total.toFixed(2)}</td>
                       </tr>
-                    ))
+                    )) 
                   ) : (
                     <tr>
                       <td colSpan="4" className="py-4 text-center text-gray-500">No items selected.</td>
