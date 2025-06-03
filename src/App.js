@@ -1175,8 +1175,8 @@ function App() {
 
           {/* Totals */}
           <div className="flex flex-col items-end text-right border-t border-gray-300 pt-4">
-            <p className="text-md font-medium text-gray-700 mb-1">Subtotal: ₹${subtotal.toFixed(2)}</p>
-            <p className="text-xl font-bold text-green-800 mt-2">Grand Total: ₹${grandTotal.toFixed(2)}</p>
+            <p className="text-md font-medium text-gray-700 mb-1">Subtotal: ₹{subtotal.toFixed(2)}</p>
+            <p className="text-xl font-bold text-green-800 mt-2">Grand Total: ₹{grandTotal.toFixed(2)}</p>
           </div>
 
           <div className="text-center mt-8 text-gray-600 text-sm">
