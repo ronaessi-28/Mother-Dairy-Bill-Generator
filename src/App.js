@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Printer, Download } from 'lucide-react';
-
+ 
 function App() {
   // State for customer details
   const [customerName, setCustomerName] = useState('');
